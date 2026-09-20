@@ -195,9 +195,11 @@ def svg(uid, label, faded, floating=''):
 def header_card(uid, ic, x=11, w=138, y=None, h=None):
     y = G['CARD_Y'] if y is None else y
     h = G['CARD_H'] if h is None else h
+    pair = 8.4 + 6                        # gap + lower bar: the pair's real height
+    padded(y, h, y + (h - pair) / 2, y + (h + pair) / 2, 'header card')
     return (card(x, y, w, h, G['CARD_R'], uid)
             + icon(ic, x + 16, y + (h - 16) / 2, 16)
-            + barpair(x + 41, y + (h - 19) / 2, 29, 58, 4.8, 6, 8.4))
+            + barpair(x + 41, y + (h - pair) / 2, 29, 58, 4.8, 6, 8.4))
 
 
 def medallion(uid, ic, cx=80, cy=None, r=None, lift=False):
@@ -207,6 +209,55 @@ def medallion(uid, ic, cx=80, cy=None, r=None, lift=False):
     return (f'<g{f}><circle cx="{cx}" cy="{cy}" r="{r}" fill="{SURF}" '
             f'stroke="{LINE}" stroke-width="{SW}"/></g>'
             + icon(ic, cx - 7.5, cy - 7.5, 15))
+
+
+
+# ------------------------------------------------------------------ guards --
+# Three defect classes that shipped before anyone noticed them, now impossible:
+# a glyph overlapping the neighbours it sits between, a rail protruding past its
+# first node, and a card whose content touches its own bottom edge. Each raises
+# at build time rather than producing a subtly wrong illustration.
+
+CLEARANCE = 2.0          # minimum breathing room on each side of a gap glyph
+
+
+def fits(x0, x1, size, what='glyph'):
+    """Centre a glyph of `size` in the gap x0..x1 and return its x.
+
+    Raises if it would touch or cross either neighbour. An arrow between two
+    cards must sit *inside* the gap -- crossing their strokes reads as a
+    rendering bug, not a design choice.
+    """
+    room = x1 - x0
+    if size + 2 * CLEARANCE > room:
+        raise ValueError(
+            f'{what} is {size} wide and needs {size + 2 * CLEARANCE} of room, '
+            f'but the gap {x0}..{x1} is only {room}. Widen the gap or shrink the glyph.')
+    return x0 + (room - size) / 2
+
+
+def rail(x, ys, r=3.6, tail=22, accent_first=True):
+    """A vertical rail through a set of nodes.
+
+    Starts at the FIRST node's centre so the node caps it -- a rail that begins
+    above its first dot leaves a visible stub. It may run past the last node
+    (that tail says 'and more'), which is why only the top end is capped.
+    """
+    s = vrule(x, ys[0], ys[-1] + tail, 0.7)
+    for i, y in enumerate(ys):
+        s += dot(x, y, r, True, ACC if (accent_first and i == 0) else FILL)
+    return s
+
+
+def padded(card_y, card_h, top, bottom, what='card'):
+    """Assert a card's content has equal-ish padding and never touches the
+    bottom edge. Content is laid out downward, so the bottom is what fails."""
+    t, b = top - card_y, (card_y + card_h) - bottom
+    if b <= 0:
+        raise ValueError(f'{what}: content overflows the bottom by {-b:.1f}. Grow the card.')
+    if abs(t - b) > 4:
+        raise ValueError(f'{what}: padding is {t:.1f} top vs {b:.1f} bottom. Balance it.')
+    return True
 
 
 # =========================================================== L A Y O U T S ==
@@ -234,7 +285,7 @@ def L2_cascade(uid, label, ic):
         b += f'<g opacity="{op}">' + card(x, y, w, h, 6.5, uid, lift=False)
         b += avatar(x + 7, y + h / 2 - 5, 10)
         b += bar(x + 21, y + h / 2 - 2.1, w - 38, 4.2)
-        b += icon('pencil-simple', x + w - 15, y + h / 2 - 4.2, 8.5, SOFT) + '</g>'
+        b += icon('pencil-simple', x + w - 15, y + h / 2 - 4.5, 9, SOFT) + '</g>'
     top = card(13, 56, 134, 21, 7, uid)
     top += avatar(24, 61.5, 11) + bar(41, 64.7, 62, 4.6)
     top += icon('pencil-simple', 129, 61.5, 10, SOFT)
@@ -369,23 +420,26 @@ def L11_timeline(uid, label, ic):
     """Narrow panel, narrow float. A full-width bar over a single column of
     events reads as a header bolted onto the wrong shape."""
     b = panel(uid, 28, 104, 8, back='offset')
-    b += vrule(44, 50, 126, 0.7)
-    for i, y in enumerate([56, 80, 104]):
-        b += dot(44, y, 3.6, True, ACC if i == 0 else FILL)
+    ys = [56, 80, 104]
+    b += rail(44, ys)
+    for y in ys:
         b += barpair(58, y - 7, 22, 50, 4.2, 5.2, 7.4)
+    b += bar(102, 22, 18, 4.6) + kebab(124, 24.5)   # answers the chip on the left
     chip = card(18, 14, 74, 22, 8, uid) + icon(ic, 27, 19, 12) + bar(44, 22.4, 34, 4.6)
     return uid, label, svg(uid, label, b, chip)
 
 
 def L12_split(uid, label, ic):
     b = panel(uid, 22, 116, 30, h=100, mode='contained', back='plate')
-    for x, done in ((30, False), (84, True)):
-        b += card(x, 62, 46, 44, 8, uid, lift=False)      # 62..106
-        b += bar(x + 8, 71, 28, 4.6) + bar(x + 8, 80, 20, 4.6)
+    cw, lx, rx = 44, 28, 88               # gap of 16 leaves the arrow room to breathe
+    for x, done in ((lx, False), (rx, True)):
+        b += card(x, 62, cw, 44, 8, uid, lift=False)
+        b += bar(x + 8, 71, 26, 4.6) + bar(x + 8, 80, 18, 4.6)
         b += (check(x + 7, 89) if done else dot(x + 10.5, 93.5, 3.2, False))
-    b += icon('arrow-right', 74, 78, 12, SOFT)
+        padded(62, 44, 71, 98, 'split card')
+    b += icon('arrow-right', fits(lx + cw, rx, 12, 'flow arrow'), 78, 12, SOFT)
     b += bar(56, 116, 48, 4.6)
-    return uid, label, svg(uid, label, b, medallion(uid, ic, cy=30))
+    return uid, label, svg(uid, label, b, medallion(uid, ic, cy=37, r=17))
 
 
 SET = [
@@ -434,4 +488,56 @@ if __name__ == '__main__':
 <div class="pane light" data-theme="light"><h2>Light</h2><div class="g">{grid('l')}</div></div>
 <div class="pane dark" data-theme="dark"><h2>Dark</h2><div class="g">{grid('d')}</div></div>
 ''')
-    print('wrote', len(items), 'svgs + gallery')
+    # references/icons.md -- the Phosphor paths as paste-ready SVG, so a model
+    # reading this repo from a link never has to open a Python file for them.
+    names = sorted(PHOSPHOR['regular'])
+    rows = ('\n' + ' · '.join(f'`{n}`' for n in names) + '\n\n```svg\n'
+            + ''.join(f'<!-- {n} --><path d="{PHOSPHOR["regular"][n]}"/>\n' for n in names)
+            + '```\n')
+    open('references/icons.md', 'w').write(f'''# Icons
+
+Phosphor **regular**, MIT licensed (https://phosphoricons.com). Generated from
+`icons.py` by `build.py` -- do not edit by hand.
+
+These are **filled** paths on a 256 grid. Never stroke them. Place one with:
+
+```svg
+<g transform="translate(X Y) scale(S)" fill="var(--il-stroke, #35322D)">
+  <path d="..."/>
+</g>
+```
+
+`S = size / 256`. Sizes: **16** in a header card (S 0.0625) · **15** in a
+medallion (0.05859) · **12** in a chip (0.04688) · **10-13** inline. Use
+`var(--il-stroke-soft, #9B948A)` for secondary glyphs and avatars,
+`var(--il-accent, #3E9077)` only for the one accented element.
+
+A name you need is missing? Take the regular-weight SVG from phosphoricons.com
+and use its path the same way -- never draw your own glyph.
+{rows}''')
+
+    # references/examples.md -- the twelve layouts as finished SVG in one file:
+    # the templates the standing rule says to start from, one fetch or upload.
+    layout = {'billing': 'L1 Header + rows', 'teams': 'L2 Cascade',
+              'categories': 'L3 Tab bar', 'workspace': 'L4 Toolbar',
+              'docs': 'L5 Corner chips', 'connectors': 'L6 Window',
+              'contributors': 'L7 Fanned', 'notifications': 'L8 Notifications',
+              'gateway': 'L9 Constellation', 'roles': 'L10 Matrix',
+              'audit': 'L11 Timeline', 'approval': 'L12 Split'}
+    blocks = ''
+    for uid, label, doc in sorted(items, key=lambda i: int(layout[i[0]].split()[0][1:])):
+        blocks += (f'\n## {layout[uid]} — `examples/{uid}.svg` '
+                   f'({label.replace("&amp;", "&")})\n\n```svg\n{doc}```\n')
+    open('references/examples.md', 'w').write(f'''# The twelve layouts
+
+Finished, checked SVG for every layout, generated by `build.py` -- do not edit
+by hand. **Start from the one you adapt:** keep its panel, backdrop, float and
+card geometry, rename its ids (`-audit` -> `-yourname`), and change only the
+content -- the icon, what sits inside the cards, how many rows.
+{blocks}''')
+
+    import check
+    bad = [uid for uid, _, _ in items if check.lint(f'examples/{uid}.svg')[0]]
+    if bad:
+        raise SystemExit(f'check.py rejects: {bad}')
+    print('wrote', len(items), 'svgs + gallery + references/icons.md; all pass check.py')

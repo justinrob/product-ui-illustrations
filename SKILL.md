@@ -1,9 +1,9 @@
 ---
-name: product-ui-illustrations
+name: spotkit
 description: Generate minimal, abstract, UI-inspired illustrations for software product features — as deterministic SVG. Use when asked for a feature illustration, product illustration, spot illustration, empty-state graphic, feature-card artwork, docs or developer-portal illustration, or a consistent illustration set/family for a product. Also use to turn a feature description or a product screenshot into an abstract UI illustration, to add a new illustration to an existing family, or to retheme an existing set.
 ---
 
-# Product UI Illustrations
+# Spotkit
 
 Turn a feature description into a quiet, abstract illustration that looks like a
 product interface reduced to its most recognizable primitives.
@@ -28,25 +28,51 @@ an external image model.
 
 ## Workflow
 
+**Read `SPEC.md` first.** It holds every number, the SVG template, the building
+blocks and a complete example — enough to draw from. The references below are
+for the decisions; open one only when a step needs it.
+
 1. **Interpret the feature.** One sentence: what does it actually do?
    → `references/metaphor.md`
 2. **Choose the metaphor.** What *relationship* is this feature about — grouping,
    connecting, gating, packaging, reviewing, sequencing?
 3. **Pick 2–5 primitives** that carry that relationship. Not more.
-4. **Pick a layout — from the prompt, not from habit.**
-   → `references/archetypes.md`. Choose by meaning, then by how many elements the
-   idea needs, then by what its neighbour already uses. Twelve are defined; the
-   composition choices generate many more.
-   **Then choose the float separately.** A full-width header card is one of eight
-   treatments and is capped at two per twelve — it is the easiest choice and it
-   will take over a set if you let it. Ask what the *subject* is: a hub gets
-   raised, a column gets a chip at its head, a surface gets no float at all.
-5. **Compose the SVG.** → `references/primitives.md`, tokens from
-   `references/theme.md`.
-6. **Run the checklist.** → `references/checklist.md`. Simplify what it flags.
+4. **Pick one of the twelve layouts — then adapt it, don't invent.**
+   → `SPEC.md` §7. Choose by the relationship, then by how many elements the
+   idea needs, then by what its neighbour already uses.
+5. **Start from that layout's example file** (`SPEC.md` §7 names it) and keep
+   its geometry: panel, backdrop, float, card sizes and positions. Change only
+   the content — the icon, what sits inside the cards, how many rows within the
+   layout's limit. Icon paths come from `references/icons.md`. If you can run
+   Python here, copy the layout's function in `build.py` and edit its content.
+6. **Check it.** Run `python3 check.py your.svg` if you can, then the list in
+   `SPEC.md` §9. Simplify what they flag.
 
 If the concept is genuinely ambiguous, offer 2–3 **conceptual** directions before
 drawing — different metaphors, never different styling.
+
+## The standing rule: adapt, don't invent
+
+Composition is where models drift. Given the same brief, one run that adapted
+the Split layout produced something that sat in the family at a glance; another
+that invented a new arrangement produced a busier, off-centre piece that didn't —
+and the same brief in a different tool drifted further still. The twelve
+layouts have been balanced against each other; a fresh composition has not.
+
+So, every time, in every tool:
+
+- **Adapt the nearest layout.** Its geometry is fixed; its content is yours.
+  Invent a new composition only when none of the twelve can carry the
+  relationship — and say so in the delivery note, naming the rule that forced it.
+- **Centred and square.** Weight on x=80, filling the 160 square. A landscape
+  strip with empty space above and below is not a spot illustration.
+- **Few, large elements.** Nothing that carries meaning is smaller than 9 units
+  — that is 9 pixels at display size. If an idea needs more detail than that, it
+  needs fewer elements, not smaller ones.
+- **Show change as states.** A flow reads fastest as before → after: two cards
+  and an arrow (L12), or one rail (L11). Not a rail *and* cards *and* a badge.
+- **Never improvise a value.** Every number, colour and snippet comes from
+  `SPEC.md`. If a value you need is not there, reuse the nearest one that is.
 
 ## What is fixed and what is yours
 
@@ -80,8 +106,9 @@ nothing in the method changes when one is added.
   narrow frame, a table of rows a wide one. Its edge either fades (open bottom:
   *there is more*) or is contained (closed: *this is all of it*). Choose by
   meaning.
-- **Exactly one thing carries the shadow.** Usually a floating element breaking
-  past the panel's edges; sometimes a raised row or the middle card of a fan.
+- **One thing carries the shadow.** Usually a floating element breaking past
+  the panel's edges; sometimes a raised row or the middle card of a fan. (The
+  corner-chip layout's diagonal pair counts as one.)
 - **The elevation goes on the record being acted on**, not on a decorative circle
   above it. When a medallion sits over a prominent first row, the row floats and
   the medallion stays flat.
@@ -95,6 +122,9 @@ nothing in the method changes when one is added.
 - **Equal top and bottom padding inside every card**, bottom never zero. This
   fails silently more than anything else here — verify it by arithmetic.
 - **The panel sits above its backdrop**, and no two sheets share a top edge.
+- **Nothing overlaps what it sits between.** A glyph in a gap fits inside it
+  with clearance; a rail is capped by its first node. `build.py` has guards
+  (`fits`, `rail`, `padded`) that raise rather than ship these — use them.
 - **One icon family, one radius language, one shadow** across the entire set.
 - **Every card carries a hairline**, not just a shadow — at 160px there is no text
   to hold the hierarchy, so the surfaces have to, and a shadow alone does not
@@ -109,7 +139,8 @@ nothing in the method changes when one is added.
 ## Two things that will bite you
 
 - **Icons are Phosphor `regular`, filled, on a 256 grid.** Set `fill`, never
-  `stroke`. Bold reads heavy against 1-unit structural strokes.
+  `stroke`. Bold reads heavy against 0.5-unit structural strokes. Paste the
+  paths from `references/icons.md`; never draw a glyph yourself.
 - **CSS custom properties do not cross into `<img>` or `<object>`.** An SVG
   loaded that way shows fallback colors forever and will not follow dark mode.
   Inline the markup to theme it — and suffix every `id` when you do, or masks
@@ -121,9 +152,12 @@ Read the one you need; don't load them all.
 
 | File | Read it when |
 |---|---|
+| `SPEC.md` | **Always, first.** Every number, the template, one full example. |
+| `references/examples.md` | You picked a layout — its finished SVG, to adapt. |
+| `references/icons.md` | You need an icon — paste-ready Phosphor paths. |
 | `references/metaphor.md` | Translating a feature into a concept. Catalog of ~24 common SaaS features. |
 | `references/archetypes.md` | Choosing a layout. Twelve compositions and the four choices that generate them. |
-| `references/primitives.md` | Writing the SVG. Verified geometry + copy-paste library. |
+| `references/primitives.md` | You need the reasoning behind a building block. |
 | `references/theme.md` | Colors, tokens, light/dark, accent rules, deriving your own palette. |
 | `references/scaling.md` | Any canvas that is not a ~160px square. |
 | `references/screenshots.md` | The user supplied a screenshot of the real UI. |
@@ -149,6 +183,8 @@ Don't pad it with explanation the user didn't ask for.
   Open `examples/gallery.html` for the contact sheet in both themes.
 - `icons.py` — embedded Phosphor geometry (regular is what the system uses;
   bold is kept for anyone who wants a heavier variant).
+- `check.py` — lints an SVG against the rules that fail silently
+  (`python3 check.py file.svg`), and the docs against `build.py` (`--docs`).
 - `build.py` — the generator that produced them. Every constant in one place;
   change one and the whole family moves together. Worth copying for any set
   larger than about eight.

@@ -61,10 +61,10 @@ cell to land in.
 | **L6** | Window | none | 134 fade, chrome | twin | a real surface, more off-screen |
 | **L7** | Fanned | middle card, raised | 128 **contained** | none | a set with one chosen |
 | **L8** | Notifications | top card | 108 **contained** | offset | events arriving |
-| **L9** | Constellation | header card | 118 fade | plate | systems converging |
-| **L10** | Matrix | header card | 118 fade | none | who can do what |
-| **L11** | Timeline | header card | 104 fade | offset | sequence, newest first |
-| **L12** | Split | medallion | 116 **contained** | plate | moving through stages |
+| **L9** | Constellation | raised hub | 118 fade | plate | systems converging |
+| **L10** | Matrix | corner chip | 118 fade | none | who can do what |
+| **L11** | Timeline | column chip | 104 fade | offset | sequence, newest first |
+| **L12** | Split | medallion, flat | 116 **contained** | plate | moving through stages |
 
 Four panel widths, two edge treatments, four backdrops. That spread is doing as
 much work as the content arrangements.
@@ -135,7 +135,7 @@ However the composition varies, these never do:
 - stroke weights, bar heights, corner radii
 - the icon family and its sizes
 - the token palette
-- exactly one element carrying the shadow
+- at most one element carrying the shadow
 - the outer ~10px kept clear
 
 A set built this way looks like twelve views of one product rather than twelve
@@ -154,10 +154,16 @@ copies of one drawing.
 
 ## Inventing a thirteenth
 
-Allowed, and expected — the four choices above generate far more than twelve.
-Two rules:
+**A last resort, not a default.** Adapt the nearest of the twelve first — keep
+its geometry, change its content. A fresh composition has not been balanced
+against the rest of the family, and it shows: in practice an invented layout
+comes out busier and off-centre next to its siblings. Invent only when none of
+the twelve can carry the relationship, and say so in the delivery note.
+
+When you do, three rules:
 
 1. Change only choices 1–4. If you find yourself changing a radius, a stroke
    weight or a token to make it work, stop: you are leaving the family.
-2. Build it as a function alongside the others in `build.py`, so it inherits
+2. Keep it centred on x=80 and square, with nothing meaningful under 9 units.
+3. Build it as a function alongside the others in `build.py`, so it inherits
    every constant rather than restating them.

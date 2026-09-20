@@ -1,8 +1,8 @@
-<h1 align="center">Product UI Illustrations</h1>
+<h1 align="center">Spotkit</h1>
 
 <p align="center">
-  A Claude skill that turns a feature description into a clean, abstract product
-  illustration — as real SVG, not a picture of one.
+  A Claude Code skill that turns a feature description into a clean, abstract
+  product illustration — as real SVG, not a picture of one.
 </p>
 
 <p align="center">
@@ -40,16 +40,64 @@ A good one makes someone think *"I understand what this feature does."* Never
 
 ## Install
 
+**Claude Code**
+
 ```bash
-git clone https://github.com/Devesh-Shirsath/product-ui-illustrations.git \
-  ~/.claude/skills/product-ui-illustrations
+git clone https://github.com/Devesh-Shirsath/spotkit.git \
+  ~/.claude/skills/spotkit
 ```
 
 Restart Claude Code and just ask. The skill picks itself up whenever you mention
 feature illustrations, spot illustrations, empty states, or an illustration set
 for a product.
 
-**No dependencies.** Python 3 only, and only if you want to regenerate.
+**Codex**
+
+```bash
+git clone https://github.com/Devesh-Shirsath/spotkit.git \
+  ~/.agents/skills/spotkit
+```
+
+Restart Codex, then ask — or call it by name: `$spotkit an illustration for audit logs`.
+
+**Any other agent** — clone the repo into your project and ask it to follow
+`SKILL.md`. `AGENTS.md` tells it what to read and what to skip.
+
+**Claude.ai** — Settings → Capabilities → Skills → upload a zip of this repo.
+Re-upload it whenever the repo changes; an old upload keeps the old rules.
+
+**ChatGPT, or any chat tool** — make a Project (or a custom GPT), upload
+`SPEC.md`, `references/icons.md` and `references/examples.md` to it, and paste
+the standing instructions below into its instructions. Uploaded files beat
+links: a chat tool may skim a link, or not open it at all.
+
+### Standing instructions
+
+The same rules for every tool, so they all draw the same family:
+
+```text
+You make Spotkit illustrations: minimal, abstract SVG product illustrations
+that follow SPEC.md exactly.
+
+1. Write SVG code by hand. Never use image generation.
+2. Adapt, don't invent. Pick the nearest of the twelve layouts in SPEC.md §7,
+   start from its example file, keep its geometry (panel, backdrop, float,
+   card sizes and positions) and change only the content: the icon, what sits
+   inside the cards, how many rows. Invent a new composition only if none of
+   the twelve fits, and say so.
+3. Never improvise a value. Every number, colour and snippet comes from
+   SPEC.md: one stroke width (0.5), one stroke colour (var(--il-line)), one
+   shadow, the fade mask, var(--il-*) colours.
+4. Centred on x=80 and square. Few, large elements: nothing that carries
+   meaning is smaller than 9 units.
+5. Icons are filled Phosphor paths from icons.md. Never draw or stroke a glyph.
+6. Before answering, go through SPEC.md §9 and fix whatever fails.
+
+Reply with: feature interpretation, metaphor, which layout it adapts,
+primitives, then the SVG.
+```
+
+**No dependencies.** Python 3 only — to regenerate, or to run `check.py`.
 
 ## Try it without installing
 
@@ -62,7 +110,7 @@ This style is pure geometry: hairline strokes, exact radii, repeated placeholder
 bars, one icon family. Diffusion models are weak at all of it, and weakest at the
 thing that matters most — **twenty illustrations that look like one family.**
 
-Claude writes the SVG directly instead. The output is exact, themeable, editable,
+The model writes the SVG directly instead. The output is exact, themeable, editable,
 diffable, and identical in treatment across a whole set. A prompt-based fallback
 is included if you want it anyway.
 
@@ -144,11 +192,22 @@ as black shapes.
 Figma discards SVG filters on import, so the drop shadow won't come across —
 re-apply it as a Figma effect on the one floating layer.
 
+## Check an illustration
+
+```bash
+python3 check.py my-feature.svg
+```
+
+Catches the defects that fail silently: a second stroke width or colour, more
+than one shadow, a background rect, text, unsuffixed ids, a moved fade line.
+Works on output from any model.
+
 ## Regenerate
 
 ```bash
-python3 build.py       # rewrites examples/ and the gallery
-python3 flatten.py     # rewrites the flat exports and contact sheets
+python3 build.py         # rewrites examples/, the gallery and references/icons.md
+python3 flatten.py       # rewrites the flat exports and contact sheets
+python3 check.py --docs  # fails if any doc disagrees with build.py
 ```
 
 Every constant lives in the `GEO` dict at the top of `build.py`. Change one and
@@ -159,7 +218,11 @@ that's most error-prone by hand.
 
 ```
 SKILL.md                  entry point and workflow
+SPEC.md                   every number, the template, one full example — start here
+AGENTS.md                 what an AI agent should read, and skip
 references/
+  icons.md                paste-ready Phosphor paths (generated)
+  examples.md             the twelve layouts as SVG templates, one file (generated)
   metaphor.md             feature → concept, ~24 worked SaaS examples
   archetypes.md           the twelve layouts and the choices behind them
   primitives.md           verified geometry + copy-paste SVG library
@@ -172,6 +235,7 @@ references/
 assets/illustration.css   drop-in token definitions
 examples/                 twelve illustrations, flat exports, contact sheet
 build.py · flatten.py     generators — every constant in one place
+check.py                  linter for illustrations and for the docs
 icons.py                  embedded Phosphor geometry
 ```
 
@@ -195,8 +259,19 @@ Worth stating rather than having you discover:
 ## Who it's for
 
 Product and UX designers, frontend developers, SaaS founders, design system and
-docs teams — anyone who needs a coherent illustration family for a whole product
-and doesn't want to draw twenty of them by hand.
+docs teams — anyone who needs feature illustrations, empty-state graphics or a
+coherent illustration family for a whole product, and doesn't want to draw twenty
+of them by hand.
+
+## Author
+
+Spotkit was built by **[Devesh Shirsath](https://deveshshirsath.com)**, a product
+designer working on developer tools and API documentation.
+
+[Portfolio](https://deveshshirsath.com) ·
+[LinkedIn](https://www.linkedin.com/in/devesh-shirsath-644625172/) ·
+[GitHub](https://github.com/Devesh-Shirsath) ·
+[Instagram](https://www.instagram.com/devesh.vs/)
 
 ## Credits
 
